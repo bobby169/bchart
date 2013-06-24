@@ -5,22 +5,23 @@
  */
 (function(win){
     var Bchart=win.Bchart=win.Bchart||{};
-    Bchart.Background=function(){
+    Bchart.Grid=function(){
         this.elem=null;
-        this.col=10;
+        this.col=15;
         this.row=50;
         this.init();
     }
-    Bchart.Background.prototype={
+    Bchart.Grid.prototype={
         init:function(){
             Bchart.Containner.append(this.render(this.row,this.col));
         },
         render:function(row,col){
-            var $table=$("<table></table>");
+            var tableWidth=(60+1)*col+1;
+            var $table=$("<table style='width:"+tableWidth+"px'></table>");
             for(var i=0;i<row;i++){
                 var $tr=$("<tr></tr>");
                 for(var j=0;j<col;j++){
-                    var $td=$("<td>"+j+"</td>");
+                    var $td=$("<td></td>");
                     $tr.append($td);
                 }
                 $table.append($tr);
@@ -53,6 +54,26 @@
             }
 
         }
+    }
+
+    Bchart.Cell=function(opt){
+        this.height=opt.height;
+        //this.color=opt.color;
+    }
+
+    Bchart.Cell.prototype={
+        draw:function(){
+
+        },
+        render:function(){
+            var td=$(".bchart-container table tr").eq(0).find("td");
+            for(var i=0;i<td.length;i++){
+                var $cell=$("<div class='cell'></div>").css({"height":100,width:10,left:i*61,background:"blue"}).appendTo(Bchart.Containner);
+
+
+            }
+        }
+
     }
 
     Bchart.Event={
@@ -106,6 +127,23 @@
                 var pos = getMousePosition(e);
                 var spanX = (pos.x - lastMouseX);
                 var spanY = (pos.y - lastMouseY);
+                var w= currentElement.offsetWidth-Bchart.Containner[0].offsetWidth;
+                var h= currentElement.offsetHeight-Bchart.Containner[0].offsetHeight;
+
+                if(lastElemLeft + spanX>0){
+                    $(currentElement).css({"left":0});
+                    return;
+                }else if(lastElemLeft + spanX<(-w)){
+                    $(currentElement).css({"left":(-w)+"px"});
+                    return;
+                }
+                if(lastElemTop + spanY>0){
+                    $(currentElement).css({"top":0});
+                    return;
+                }else if(lastElemTop + spanY<(-h)){
+                    $(currentElement).css({"top":(-h)+"px"});
+                    return;
+                }
                 if(def.direction=="top"){
                     $(currentElement).css("top", (lastElemTop + spanY));
                 }else if(def.direction=="left"){
@@ -119,6 +157,7 @@
 
             $(document).mousemove(function(e){
                 var canDrag=true;
+
                 if(isMouseDown && dragStatus[currentElement.id] != 'false'){
                     if(callback != undefined){
                        //拖动觖发的事件必须返回return true才能拖动
@@ -144,7 +183,7 @@
                     if((dragStatus[me.id] == "off") || (dragStatus[me.id] == "handler" && !holdingHandler))
                         return bubblings[me.id];
                     target.css("position", "absolute");
-                    target.css("z-index", parseInt( new Date().getTime()/1000 ));
+                   // target.css("z-index", parseInt( new Date().getTime()/1000 ));
                     isMouseDown = true;
                     currentElement = me;
                     var pos = getMousePosition(e);
@@ -169,13 +208,16 @@
     Bchart.Init=function(containner){
         Bchart.Containner=containner||$("<div class='bchart-containner'></div>").appendTo($(document.body));
         Bchart.Containner.addClass("bchart-container");
-        var bg=new Bchart.Background();
-        //bg.update();
-        bg.zoom();
-        Bchart.Event.scroll(bg);
+        Bchart.Proxy= $("<div class='bchart-proxy'></div>").appendTo(Bchart.Containner);
+        var grid=new Bchart.Grid();
+        //grid.update();
+        grid.zoom();
+        Bchart.Event.scroll(grid);
         Bchart.Event.drag($("table"),{
-            direction:"left"
+           // direction:"left"
         })
+        var cell=new Bchart.Cell(30);
+        cell.render();
       //$("table").easydrag()
     }
 })(window)
