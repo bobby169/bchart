@@ -91,18 +91,21 @@
 
     Bchart.Coordinate=function(type){
          this.type=type;
+        this.spanY=35;
+        this.spanX=30;
+        this.init();
     }
     Bchart.Coordinate.prototype={
         init:function(){
-
+            this.draw(this.spanX,this.spanY);
         },
         draw:function(spanX,spanY){
             for(var i=0;i<spanX;i++){
-                var $coordX=$("<span class='bchart-coordinateX'></span>").appendTo(Bchart.Proxy);
+                var $coordX=$("<span class='bchart-coordinateX'>1</span>").appendTo(Bchart.Proxy);
 
             }
             for(var j=0;j<spanY;j++){
-                var $coordY=$("<span class='bchart-coordinateY'></span>").appendTo(Bchart.Proxy);
+                var $coordY=$("<span class='bchart-coordinateY'>2</span>").appendTo(Bchart.Proxy);
 
             }
         }
@@ -253,6 +256,7 @@
         Bchart.Event.scroll(grid);
 
         var cell=new Bchart.Cell(30);
+        var coor =new Bchart.Coordinate();
         //cell.render();
         //console.info(cell.elems[0])
         //cell.elems[5].css({"background":"red"})
