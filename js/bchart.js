@@ -89,8 +89,7 @@
 
     }
 
-    Bchart.Twobar=function(type){
-        this.type=type;
+    Bchart.Twobar=function(){
         this.init();
     }
     Bchart.Twobar.prototype={
@@ -98,32 +97,99 @@
             this.draw();
         },
         draw:function(){
-            if(this.type=="dist"){
-               // var i=0;
-                var $twobarDist=$("<div class='bchart-twobar-"+this.type+"'></div>").css({"left":"205px","height":"80px"}).appendTo(Bchart.Proxy);
-                Bchart.Event.drag($twobarDist,{
-                    direction:"left"
-                },function(e,currentElement,curDate,moveDate){
-                    var h=$twobarDist.height();
-                    var change=curDate+moveDate;
-                    console.info(change)
+            var $twobarSrc,$twobarDist;
 
-                    h=  $(".bchart-twobar-src").height()+change*10-2*10;
-                    //console.info(h)
-                    $twobarDist.css({height:h+"px"}).attr("title",h);
-                    //i++;
-                    //console.info(change)
-                    //console.info(curDate,moveDate)
-                    return true;
-                })
-            }else{
-                var $twobarSrc=$("<div class='bchart-twobar-"+this.type+"'></div>").css({"left":"82px"}).appendTo(Bchart.Proxy);
-                Bchart.Event.resize($twobarSrc);
-            }
+
+            $twobarSrc=$("<div class='bchart-twobar-src'></div>").css({"left":"82px"}).appendTo(Bchart.Proxy);
+            $twobarDist=$("<div class='bchart-twobar-dist'></div>").css({"left":"205px","height":"80px"}).appendTo(Bchart.Proxy);
+
+          //  console.info($twobarDist)
+
+            Bchart.Event.resize($twobarSrc,$twobarDist,function(e,currentElement,change){
+                // console.info(change)
+                var h=$twobarSrc.height()+change*10;
+                $(".bchart-twobar-dist").css({height:h});
+                return true;
+            });
+
+            Bchart.Event.drag($twobarDist,{
+                direction:"left"
+            },function(e,currentElement,curDate,moveDate){
+                var h=$twobarDist.height();
+                var change=curDate+moveDate;
+                console.info(change)
+
+                h=  $(".bchart-twobar-src").height()+change*10-2*10;
+                //console.info(h)
+                $twobarDist.css({height:h+"px"}).attr("title",h);
+                //i++;
+                //console.info(change)
+                //conm,sole.info(curDate,moveDate)
+                return true;
+            })
+
+                //Bchart.Event.resize($twobarDist,function(){
+                //    return true;
+                //});
+
+
 
         }
     }
 
+    Bchart.Line=function(lineIndex, x1, y1, x2, y2){
+        this.lineIndex=lineIndex;
+        this.x1=x1;
+        this.y1=y1;
+        this.x2=x2;
+        this.y2=y2;
+        this.init();
+    }
+    Bchart.Line.prototype={
+        init:function(){
+            this.draw(this.lineIndex, this.x1, this.y1, this.x2, this.y2);
+        },
+        draw:function(lineIndex, x1, y1, x2, y2){
+            var objectHandle = document.getElementById( "line"+ lineIndex )
+            if( !objectHandle )
+            {
+                //document.body.innerHTML += "<img id='line"+ lineIndex +"' class='line' />"
+                Bchart.Proxybox.append("<img id='line"+ lineIndex +"' class='line' />");
+                objectHandle = document.getElementById( "line"+ lineIndex )
+            }
+
+            this.update( objectHandle, x1, y1, x2, y2 )
+        },
+        update:function(lineObjectHandle, Ax, Ay, Bx, By){
+            var
+                preloadedImages = document.getElementById('preload').getElementsByTagName('img')
+                xMin		= Math.min( Ax, Bx ),
+                yMin		= Math.min( Ay, By ),
+                xMax		= Math.max( Ax, Bx ),
+                yMax		= Math.max( Ay, By ),
+                boxWidth	= Math.max( xMax-xMin, 1 ),
+                boxHeight	= Math.max( yMax-yMin, 1 ),
+                tmp			= Math.min( boxWidth, boxHeight, 256 ),
+                lineIndex	= (Bx-Ax)*(By-Ay)<0?0:1
+
+            console.info(tmp,lineIndex)
+            while( tmp=tmp>>1 ){
+                lineIndex+=2
+               console.warn(tmp,lineIndex)
+            }
+
+            lineObjectHandle.src = preloadedImages[lineIndex].src
+
+            //console.info(lineObjectHandle.src)
+            with( lineObjectHandle.style )
+            {
+                width	= boxWidth	+"px"
+                height	= boxHeight	+"px"
+                left	= xMin		+"px"
+                top		= yMin		+"px"
+            }
+        }
+    }
 
     Bchart.Coordinate=function(type){
         this.type=type;
@@ -276,15 +342,16 @@
 
             })();
         },
-        resize:function(target,callback){
+        resize:function(target,target2,callback){
+
             var isMouseDown = false,
                 currentElement = null,
                 lastMouseX,
                 lastMouseY,
                 lastElemTop,
                 lastElemLeft,
-                curDate= 0,
-                moveDate= 0;
+                lastElemHeight,
+                change;
 
             var getMousePosition = function(e){
                 var posx = 0;
@@ -305,9 +372,11 @@
                 var pos = getMousePosition(e);
                 var spanX = (pos.x - lastMouseX);
                 var spanY = (pos.y - lastMouseY);
-                var h=$(currentElement).height();
-                $(currentElement).css({"height":h-spanY})
-               // console.info(spanX,spanY)
+                //var h=$(currentElement).height();
+                $(currentElement).css({"height":lastElemHeight-spanY});
+                e.stopPropagation();
+
+                // console.info(spanX,spanY)
             }
 
             $(document).mousemove(function(e){
@@ -316,7 +385,7 @@
                 if(isMouseDown){
                     if(callback != undefined){
                         //拖动觖发的事件必须返回return true才能resize
-                        canResize= !! callback.call(currentElement,e,currentElement,curDate,moveDate);
+                        canResize= !! callback.call(currentElement,e,currentElement,change);
                     }
                     if(canResize) updateResize(e);
                     return false;
@@ -329,10 +398,11 @@
                 }
             });
 
-            (function(allowBubbling ){
+            (function( ){
                 target.each(function(e){
                     $(this).css("cursor", "n-resize");
                     $(this).mousedown(function(e){
+                        change=(target2[0].offsetLeft-this.offsetLeft)/41;
                         isMouseDown = true;
                         currentElement = this;
                         var pos = $.getMousePosition(e);
@@ -340,6 +410,7 @@
                         lastMouseY = pos.y;
                         lastElemTop = this.offsetTop;
                         lastElemLeft = this.offsetLeft;
+                        lastElemHeight=$(this).height();
                         updateResize(e);
                     });
                 })
@@ -366,8 +437,10 @@
         var cell=new Bchart.Cell(30);
         var coor =new Bchart.Coordinate();
 
-        new Bchart.Twobar("src");
-        new Bchart.Twobar("dist");
+
+        new Bchart.Twobar();
+
+        new Bchart.Line(1, 0,  0, 200, 50);
         //cell.render();
         //console.info(cell.elems[0])
         //cell.elems[5].css({"background":"red"})
