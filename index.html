@@ -6,16 +6,22 @@
     <script type="text/javascript" src="js/jquery-1.10.1.min.js"></script>
     <script type="text/javascript" src="js/drag.js"></script>
     <script type="text/javascript" src="js/bchart.js"></script>
-    <title>bchart dfefefe</title>
+    <title>bchart</title>
     <style type="text/css">
         #wrap{ width:800px; height:400px;}
-        .bchart-container{width:100%; height:100%;border:1px solid #444; overflow:hidden; margin:0 auto; position:relative;}
+        .bchart-container{font-size:12px;width:100%; height:100%; overflow:hidden; margin:0 auto; position:relative;}
         .bchart-container table{ border-collapse: collapse; border-spacing: 0!important; position:absolute; bottom:0;left:0;}
         .bchart-container table tr td{ border-top:1px solid #e5e5e5; border-right:0px solid #fff;color:#fff; height:20px; padding:0;}
         .bchart-container .bchart-cell{ position:absolute; bottom:0;}
+        .bchart-proxybox{ position:relative;border:1px solid ; top:0;left:0;margin-left:50px; margin-bottom:15px; overflow:hidden;}
         .bchart-proxy{ width:100%; height:100%;position:absolute; bottom:0; left:0;}
-        .bchart-coordinateX{ position:absolute;bottom: 10px;}
-        .bchart-coordinateY{ position:absolute;left:-10px;}
+        .bchart-coordinateX-box{position:absolute;left:50px;bottom:0;}
+        .bchart-coordinateY-box{position:absolute;left:0; bottom:15px;}
+
+        .bchart-coordinateX{ display:inline-block; *display:inline;*zoom:1; line-height:15px;}
+        .bchart-coordinateY{  display:block; width:50px; line-height:21px; text-align:right; }
+        .bchart-twobar-src{ position:absolute; bottom:0; width:10px; background:red; height:50px;}
+        .bchart-twobar-dist{ position:absolute; bottom:0; width:10px; background:blue; height:50px; opacity:0.5;}
     </style>
 </head>
 

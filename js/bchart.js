@@ -89,8 +89,44 @@
 
     }
 
+    Bchart.Twobar=function(type){
+        this.type=type;
+        this.init();
+    }
+    Bchart.Twobar.prototype={
+        init:function(){
+            this.draw();
+        },
+        draw:function(){
+            if(this.type=="dist"){
+               // var i=0;
+                var $twobarDist=$("<div class='bchart-twobar-"+this.type+"'></div>").css({"left":"205px","height":"80px"}).appendTo(Bchart.Proxy);
+                Bchart.Event.drag($twobarDist,{
+                    direction:"left"
+                },function(e,currentElement,curDate,moveDate){
+                    var h=$twobarDist.height();
+                    var change=curDate+moveDate;
+                    console.info(change)
+
+                    h=  $(".bchart-twobar-src").height()+change*10-2*10;
+                    //console.info(h)
+                    $twobarDist.css({height:h+"px"}).attr("title",h);
+                    //i++;
+                    //console.info(change)
+                    //console.info(curDate,moveDate)
+                    return true;
+                })
+            }else{
+                var $twobarSrc=$("<div class='bchart-twobar-"+this.type+"'></div>").css({"left":"82px"}).appendTo(Bchart.Proxy);
+                Bchart.Event.resize($twobarSrc);
+            }
+
+        }
+    }
+
+
     Bchart.Coordinate=function(type){
-         this.type=type;
+        this.type=type;
         this.spanY=35;
         this.spanX=30;
         this.init();
@@ -100,14 +136,17 @@
             this.draw(this.spanX,this.spanY);
         },
         draw:function(spanX,spanY){
+            var tableWidth=(40+1)*spanY+1;
+            var $coordXs=$("<div class='bchart-coordinateX-box' style='width: "+tableWidth+"px;'></div>");
+            var $coordYs=$("<div class='bchart-coordinateY-box'></div>");
             for(var i=0;i<spanX;i++){
-                var $coordX=$("<span class='bchart-coordinateX'>1</span>").appendTo(Bchart.Proxy);
-
+                var $coordX=$("<span class='bchart-coordinateX' style='width:41px'>"+i+"</span>").appendTo($coordXs);
             }
             for(var j=0;j<spanY;j++){
-                var $coordY=$("<span class='bchart-coordinateY'>2</span>").appendTo(Bchart.Proxy);
+                var $coordY=$("<span class='bchart-coordinateY' style='height:21px;'>200,000</span>").appendTo($coordYs);
 
             }
+            Bchart.Containner.append($coordXs).append($coordYs);
         }
     }
 
@@ -140,6 +179,8 @@
                 lastElemLeft,
                 dragStatus = {},
                 holdingHandler = false,
+                curDate= 0,
+                moveDate= 0,
                 def= $.extend({
 
                 },options);
@@ -182,6 +223,9 @@
                     $(currentElement).css("top", (lastElemTop + spanY));
                 }else if(def.direction=="left"){
                     $(currentElement).css("left", (lastElemLeft + spanX));
+                    curDate=lastElemLeft/41;
+                    moveDate=spanX/41;
+                   // console.info(curDate,moveDate)
                 }else{
                     $(currentElement).css("top", (lastElemTop + spanY));
                     $(currentElement).css("left", (lastElemLeft + spanX));
@@ -195,7 +239,7 @@
                 if(isMouseDown && dragStatus[currentElement.id] != 'false'){
                     if(callback != undefined){
                        //拖动觖发的事件必须返回return true才能拖动
-                       canDrag= !! callback.call(currentElement.id,e,currentElement);
+                       canDrag= !! callback.call(currentElement.id,e,currentElement,curDate,moveDate);
                     }
                     if(canDrag) updatePosition(e);
                     return false;
@@ -217,7 +261,7 @@
                         if((dragStatus[this.id] == "off") || (dragStatus[this.id] == "handler" && !holdingHandler))
                             return bubblings[this.id];
                         $(this).css("position", "absolute");
-                        $(this).css("z-index", parseInt( new Date().getTime()/1000 ));
+                        //$(this).css("z-index", parseInt( new Date().getTime()/1000 ));
                         isMouseDown = true;
                         currentElement = this;
                         var pos = $.getMousePosition(e);
@@ -231,13 +275,76 @@
                 })
 
             })();
-           /* $.fn.ondrag = function(callback){
-                return this.each(function(){
-                    dragCallbacks[this.id] = callback;
-                });
+        },
+        resize:function(target,callback){
+            var isMouseDown = false,
+                currentElement = null,
+                lastMouseX,
+                lastMouseY,
+                lastElemTop,
+                lastElemLeft,
+                curDate= 0,
+                moveDate= 0;
+
+            var getMousePosition = function(e){
+                var posx = 0;
+                var posy = 0;
+                if (!e) var e = window.event;
+                if (e.pageX || e.pageY) {
+                    posx = e.pageX;
+                    posy = e.pageY;
+                }
+                else if (e.clientX || e.clientY) {
+                    posx = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+                    posy = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+                }
+                return { 'x': posx, 'y': posy };
             };
 
-               */
+            var updateResize=function(e){
+                var pos = getMousePosition(e);
+                var spanX = (pos.x - lastMouseX);
+                var spanY = (pos.y - lastMouseY);
+                var h=$(currentElement).height();
+                $(currentElement).css({"height":h-spanY})
+               // console.info(spanX,spanY)
+            }
+
+            $(document).mousemove(function(e){
+                var canResize=true;
+
+                if(isMouseDown){
+                    if(callback != undefined){
+                        //拖动觖发的事件必须返回return true才能resize
+                        canResize= !! callback.call(currentElement,e,currentElement,curDate,moveDate);
+                    }
+                    if(canResize) updateResize(e);
+                    return false;
+                }
+            });
+            $(document).mouseup(function(e){
+                if(isMouseDown){
+                    isMouseDown = false;
+                    return false;
+                }
+            });
+
+            (function(allowBubbling ){
+                target.each(function(e){
+                    $(this).css("cursor", "n-resize");
+                    $(this).mousedown(function(e){
+                        isMouseDown = true;
+                        currentElement = this;
+                        var pos = $.getMousePosition(e);
+                        lastMouseX = pos.x;
+                        lastMouseY = pos.y;
+                        lastElemTop = this.offsetTop;
+                        lastElemLeft = this.offsetLeft;
+                        updateResize(e);
+                    });
+                })
+
+            })();
         }
 
     }
@@ -249,7 +356,8 @@
     Bchart.Init=function(containner){
         Bchart.Containner=containner||$("<div class='bchart-containner'></div>").appendTo($(document.body));
         Bchart.Containner.addClass("bchart-container");
-        Bchart.Proxy= $("<div class='bchart-proxy'></div>").appendTo(Bchart.Containner);
+        Bchart.Proxybox=$("<div class='bchart-proxybox'></div>").css({width:Bchart.Containner.width()-50-5,height:Bchart.Containner.height()-15}).appendTo(Bchart.Containner);
+        Bchart.Proxy= $("<div class='bchart-proxy'></div>").appendTo(Bchart.Proxybox);
         var grid=new Bchart.Grid();
         //grid.update();
         grid.zoom();
@@ -257,11 +365,14 @@
 
         var cell=new Bchart.Cell(30);
         var coor =new Bchart.Coordinate();
+
+        new Bchart.Twobar("src");
+        new Bchart.Twobar("dist");
         //cell.render();
         //console.info(cell.elems[0])
         //cell.elems[5].css({"background":"red"})
         Bchart.Event.drag($(".bchart-proxy"),{
-            // direction:"left"
+             direction:"left"
         })
     //  $(".bchart-cell").easydrag()
     }
